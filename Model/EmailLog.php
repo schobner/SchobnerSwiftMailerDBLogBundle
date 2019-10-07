@@ -10,7 +10,7 @@ use Swift_Mime_SimpleMessage;
 
 /**
  * @ORM\Entity()
- * @ORM\Table(name="bu_email_log")
+ * @ORM\Table(name="swift_mailer_log")
  *
  * @UniqueEntity("message_id")
  */
