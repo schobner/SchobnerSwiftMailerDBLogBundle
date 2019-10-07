@@ -11,7 +11,8 @@
     "authors": [
         {
             "name": "Matthias Schobner",
-            "homepage": "https://www.schobner.rocks"
+            "homepage": "https://www.schobner.rocks",
+            "email": "matthias@schobner.rocks"
         }
     ],
     "require": {
