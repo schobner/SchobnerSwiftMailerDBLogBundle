@@ -1,0 +1,28 @@
+language: php
+dist: trusty
+sudo: false
+
+php:
+  - 7.1
+  - 7.2
+  - 7.3
+
+before_install:
+  - phpenv config-rm xdebug.ini
+  - composer --verbose self-update
+  - composer --version
+
+install:
+  - composer --verbose validate
+  - composer --verbose install
+
+script:
+  - ./vendor/bin/phpunit --configuration ./phpunit.xml.dist
+
+# TODO: Test with different symfony versions?!
+
+#notifications:
+#  email: false
+#  slack:
+#    rooms:
+#      - schobner:dummy#ci_tests
