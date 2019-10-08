@@ -20,9 +20,7 @@ class SchobnerSwiftMailerDBLogExtension extends Extension
      */
     public function load(array $configs, ContainerBuilder $container): void
     {
-        // Load bundle configs
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
-        //$loader->load('config.yml');
         $loader->load('services.yml');
     }
 }
