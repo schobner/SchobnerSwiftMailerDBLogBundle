@@ -20,4 +20,6 @@ class Configuration implements ConfigurationInterface
 
         return $treeBuilder;
     }
+
+    // TODO: Test configuration import?!
 }
