@@ -1,6 +1,6 @@
 <?php
 
-namespace Schobner\SwiftMailerDBLogBundle\FCApiClientBundle;
+namespace Schobner\SwiftMailerDBLogBundle;
 
 use Schobner\SwiftMailerDBLogBundle\DependencyInjection\SchobnerSwiftMailerDBLogExtension;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
