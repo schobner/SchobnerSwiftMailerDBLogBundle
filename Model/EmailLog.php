@@ -24,49 +24,49 @@ abstract class EmailLog implements EmailLogInterface
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="AUTO")
      */
-    private $id;
+    protected $id;
 
     /**
      * @var \DateTime
      *
      * @ORM\Column(type="datetime")
      */
-    private $created;
+    protected $created;
 
     /**
      * @var \DateTime
      *
      * @ORM\Column(type="datetime")
      */
-    private $updated;
+    protected $updated;
 
     /**
      * @var string
      *
      * @ORM\Column(type="string", unique=true)
      */
-    private $messageId;
+    protected $messageId;
 
     /**
      * @var array
      *
      * @ORM\Column(type="array")
      */
-    private $emailFrom;
+    protected $emailFrom;
 
     /**
      * @var array
      *
      * @ORM\Column(type="array")
      */
-    private $emailTo;
+    protected $emailTo;
 
     /**
      * @var string
      *
      * @ORM\Column(type="string")
      */
-    private $subject;
+    protected $subject;
 
     // TODO: Add fields that all will be saved. E.g. replayTo, ...
 
@@ -77,7 +77,7 @@ abstract class EmailLog implements EmailLogInterface
      *
      * @ORM\Column(type="text")
      */
-    private $eml;
+    protected $eml;
 
     /**
      * Status if message has send.
@@ -87,7 +87,7 @@ abstract class EmailLog implements EmailLogInterface
      *
      * @ORM\Column(type="integer")
      */
-    private $resultStatus;
+    protected $resultStatus;
 
     /**
      * Errors from sending email
@@ -96,7 +96,7 @@ abstract class EmailLog implements EmailLogInterface
      *
      * @ORM\Column(type="text", nullable=true)
      */
-    private $sendExceptionMessage;
+    protected $sendExceptionMessage;
 
     /**
      * Original swift message. For retrospective bug fixes.
@@ -105,7 +105,7 @@ abstract class EmailLog implements EmailLogInterface
      *
      * @ORM\Column(type="text")
      */
-    private $swiftMessage;
+    protected $swiftMessage;
 
     public function getId(): int
     {
