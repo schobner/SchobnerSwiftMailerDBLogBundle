@@ -33,6 +33,7 @@ class SendEmailListener implements Swift_Events_SendListener, Swift_Events_Trans
         //$this->emailLogClass = $emailLogClass;
         echo 'parameter from container: ';
         var_dump($container->getParameter('schobner_swift_mailer_db_log.email_log_entity'));
+        var_dump($container->getParameter('email_log_entity'));
         $this->emailLogClass = $container->getParameter('schobner_swift_mailer_db_log.email_log_entity');
     }
 
