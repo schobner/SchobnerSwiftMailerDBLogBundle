@@ -11,7 +11,6 @@ use Swift_Events_SendListener;
 use Swift_Events_TransportExceptionEvent;
 use Swift_Events_TransportExceptionListener;
 use Swift_Mime_SimpleMessage;
-use Symfony\Component\DependencyInjection\Container;
 
 class SendEmailListener implements Swift_Events_SendListener, Swift_Events_TransportExceptionListener
 {
@@ -25,16 +24,12 @@ class SendEmailListener implements Swift_Events_SendListener, Swift_Events_Trans
     private $emailLog;
 
     /** @var string */
-    private $emailLogClass;
+    private $emailLogEntity;
 
-    public function __construct(EntityManagerInterface $em, Container $container)//, string $emailLogClass)
+    public function __construct(EntityManagerInterface $em, string $emailLogEntity)
     {
         $this->em = $em;
-        //$this->emailLogClass = $emailLogClass;
-        echo 'parameter from container: ';
-        var_dump($container->getParameter('schobner_swift_mailer_db_log.email_log_entity'));
-        var_dump($container->getParameter('email_log_entity'));
-        $this->emailLogClass = $container->getParameter('schobner_swift_mailer_db_log.email_log_entity');
+        $this->emailLogEntity = $emailLogEntity;
     }
 
     /**
@@ -72,21 +67,21 @@ class SendEmailListener implements Swift_Events_SendListener, Swift_Events_Trans
      */
     private function createLog(Swift_Mime_SimpleMessage $msg, int $result_status): void
     {
-        if (empty($this->emailLogClass)) {
+        if (empty($this->emailLogEntity)) {
             return;
         }
 
-        if (!class_exists($this->emailLogClass)) {
+        if (!class_exists($this->emailLogEntity)) {
             throw new ClassNotExistsException('Set email_log_entity in your config.yml.');
         }
 
-        if (!in_array(EmailLogInterface::class, class_implements($this->emailLogClass), true)) {
+        if (!in_array(EmailLogInterface::class, class_implements($this->emailLogEntity), true)) {
             throw new ClassNotImplementsEmailLogInterfaceException(
                 'Set a class in email_log_entity which extends \Schobner\SwiftMailerDBLogBundle\Modal\EmailLog.'
             );
         }
 
-        $this->emailLog = (new $this->emailLogClass());
+        $this->emailLog = (new $this->emailLogEntity());
         $this->emailLog
             ->setMessageId($msg->getId())
             ->setEmailFrom($msg->getFrom())
