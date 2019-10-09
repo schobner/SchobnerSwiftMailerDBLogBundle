@@ -26,10 +26,10 @@ class SendEmailListener implements Swift_Events_SendListener, Swift_Events_Trans
     /** @var string */
     private $emailLogClass;
 
-    public function __construct(EntityManagerInterface $em)//, string $emailLogClass)
+    public function __construct(EntityManagerInterface $em, string $emailLogClass)
     {
         $this->em = $em;
-        //$this->emailLogClass = $emailLogClass;
+        $this->emailLogClass = $emailLogClass;
     }
 
     /**

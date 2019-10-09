@@ -7,4 +7,4 @@ services:
       - { name: swiftmailer.default.plugin }
       - { name: swiftmailer.second_mailer.plugin }
     #arguments:
-    #  - $emailLogClass: '%schobner_swift_mailer_db_log.email_log_entity%'
+      - $emailLogClass: '%schobner_swift_mailer_db_log.email_log_entity%'
