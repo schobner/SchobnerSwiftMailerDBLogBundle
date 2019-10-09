@@ -6,6 +6,4 @@ services:
     tags:
       - { name: swiftmailer.default.plugin }
       - { name: swiftmailer.second_mailer.plugin }
-    arguments:
-      - $em: '@doctrine.orm.entity_manager'
-      - $emailLogClass: '%schobner_swift_mailer_db_log.email_log_entity%'
+    autowire: true

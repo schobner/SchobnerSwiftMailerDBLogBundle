@@ -11,6 +11,7 @@ use Swift_Events_SendListener;
 use Swift_Events_TransportExceptionEvent;
 use Swift_Events_TransportExceptionListener;
 use Swift_Mime_SimpleMessage;
+use Symfony\Component\DependencyInjection\Container;
 
 class SendEmailListener implements Swift_Events_SendListener, Swift_Events_TransportExceptionListener
 {
@@ -26,10 +27,13 @@ class SendEmailListener implements Swift_Events_SendListener, Swift_Events_Trans
     /** @var string */
     private $emailLogClass;
 
-    public function __construct(EntityManagerInterface $em, string $emailLogClass)
+    public function __construct(EntityManagerInterface $em, Container $container)//, string $emailLogClass)
     {
         $this->em = $em;
-        $this->emailLogClass = $emailLogClass;
+        //$this->emailLogClass = $emailLogClass;
+        echo 'parameter from container: ';
+        var_dump($container->getParameter('schobner_swift_mailer_db_log.email_log_entity'));
+        $this->emailLogClass = $container->getParameter('schobner_swift_mailer_db_log.email_log_entity');
     }
 
     /**
