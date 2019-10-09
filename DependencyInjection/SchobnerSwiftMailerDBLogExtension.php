@@ -25,13 +25,13 @@ class SchobnerSwiftMailerDBLogExtension extends Extension
 
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $configs);
-        echo 'email_log_entity 1: ';
-        var_dump($config['email_log_entity']);
+        echo '$config 1: ';
+        var_dump($config);
 
         $configuration = $this->getConfiguration($configs, $container);
         $config = $this->processConfiguration($configuration, $configs);
-        echo 'email_log_entity 2: ';
-        var_dump($config['email_log_entity']);
+        echo '$config 2: ';
+        var_dump($config);
 
         $container->setAlias('schobner_swift_mailer_db_log.email_log_entity', $config['email_log_entity']);
     }

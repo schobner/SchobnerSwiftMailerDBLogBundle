@@ -2,9 +2,10 @@ services:
 
   # Event listener
   schobner.swift_mailer_db_log.listener.swift_mailer.send_email:
-    class: AppBundle\EventListener\SendEmailListener
+    class: Schobner\SwiftMailerDBLogBundle\EventListener\SendEmailListener
     tags:
       - { name: swiftmailer.default.plugin }
       - { name: swiftmailer.second_mailer.plugin }
     arguments:
+      - $em: '@doctrine.orm.entity_manager'
       - $emailLogClass: '%schobner_swift_mailer_db_log.email_log_entity%'
