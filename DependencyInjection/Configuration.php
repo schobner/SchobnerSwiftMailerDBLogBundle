@@ -10,9 +10,10 @@ class Configuration implements ConfigurationInterface
 
     public function getConfigTreeBuilder(): TreeBuilder
     {
-        $treeBuilder = new TreeBuilder('schobner_swift_mailer_db_log');
+        $treeBuilder = new TreeBuilder();
+        $rootNote = $treeBuilder->root('schobner_swift_mailer_db_log');
 
-        $treeBuilder->getRootNode()
+        $rootNote
             ->children()
                 ->scalarNode('email_log_entity')->end()
             ->end()
