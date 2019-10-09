@@ -1,4 +1,7 @@
 services:
+  _defaults:
+    bind:
+      $email_log_entity: '%schobner_swift_mailer_db_log.email_log_entity%'
 
   # Event listener
   schobner.swift_mailer_db_log.listener.swift_mailer.send_email:
