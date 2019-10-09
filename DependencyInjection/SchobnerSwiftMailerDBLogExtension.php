@@ -21,7 +21,10 @@ class SchobnerSwiftMailerDBLogExtension extends Extension
     public function load(array $configs, ContainerBuilder $container): void
     {
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
-        $loader->load('config.yml');
         $loader->load('services.yml');
+
+        $configuration = new Configuration();
+        $config = $this->processConfiguration($configuration, $configs);
+        var_dump($config['email_log_entity']);
     }
 }
