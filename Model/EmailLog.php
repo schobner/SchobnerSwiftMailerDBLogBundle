@@ -4,7 +4,6 @@ namespace Schobner\SwiftMailerDBLogBundle\Modal;
 
 use DateTime;
 use Doctrine\ORM\Mapping as ORM;
-use Schobner\SwiftMailerDBLog\Modal\EmailLogInterface;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Swift_Mime_SimpleMessage;
 

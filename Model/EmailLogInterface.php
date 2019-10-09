@@ -1,6 +1,6 @@
 <?php
 
-namespace Schobner\SwiftMailerDBLog\Modal;
+namespace Schobner\SwiftMailerDBLogBundle\Modal;
 
 use DateTime;
 use Swift_Mime_SimpleMessage;

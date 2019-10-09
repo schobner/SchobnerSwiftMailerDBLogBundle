@@ -3,7 +3,7 @@
 namespace Schobner\SwiftMailerDBLogBundle\EventListener;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Schobner\SwiftMailerDBLog\Modal\EmailLogInterface;
+use Schobner\SwiftMailerDBLogBundle\Modal\EmailLogInterface;
 use Schobner\SwiftMailerDBLogBundle\Exception\ClassNotExistsException;
 use Schobner\SwiftMailerDBLogBundle\Exception\ClassNotImplementsEmailLogInterfaceException;
 use Swift_Events_SendEvent;
