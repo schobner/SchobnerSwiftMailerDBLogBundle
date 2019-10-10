@@ -28,4 +28,9 @@ class SchobnerSwiftMailerDBLogExtension extends Extension
 
         $container->setParameter('schobner_swift_mailer_db_log.email_log_entity', $config['email_log_entity'] ?? '');
     }
+
+    public function getAlias(): string
+    {
+        return 'schobner_swift_mailer_db_Log';
+    }
 }

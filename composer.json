@@ -29,7 +29,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Schobner\\SwiftMailerDBLogBundle\\": ""
+            "\\": ""
         },
         "exclude-from-classmap": [
             "/Tests/"
