@@ -34,7 +34,13 @@ namespace AppBundle\Entity;
 
 use Schobner\SwiftMailerDBLogBundle\Model\EmailLog as BaseEmailLog;
 
+/**
+ * @ORM\Entity()
+ * @ORM\Table(name="bu_email_log")
+ */
 class EmailLog extends BaseEmailLog
 {
+    // ... add your logic if required ...
 }
+
 ```
