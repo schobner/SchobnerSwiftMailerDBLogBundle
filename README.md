@@ -32,7 +32,7 @@ All db settings will be automatically set
 ```
 namespace AppBundle\Entity;
 
-use Schobner\SwiftMailerDBLogBundle\Modal\EmailLog as BaseEmailLog;
+use Schobner\SwiftMailerDBLogBundle\Model\EmailLog as BaseEmailLog;
 
 class EmailLog extends BaseEmailLog
 {

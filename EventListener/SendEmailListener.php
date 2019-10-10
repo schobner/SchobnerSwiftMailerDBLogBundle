@@ -3,7 +3,7 @@
 namespace Schobner\SwiftMailerDBLogBundle\EventListener;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Schobner\SwiftMailerDBLogBundle\Modal\EmailLogInterface;
+use Schobner\SwiftMailerDBLogBundle\Model\EmailLogInterface;
 use Schobner\SwiftMailerDBLogBundle\Exception\ClassNotExistsException;
 use Schobner\SwiftMailerDBLogBundle\Exception\ClassNotImplementsEmailLogInterfaceException;
 use Swift_Events_SendEvent;
@@ -20,7 +20,7 @@ class SendEmailListener implements Swift_Events_SendListener, Swift_Events_Trans
     /** @var \Doctrine\ORM\EntityManagerInterface */
     private $em;
 
-    /** @var \Schobner\SwiftMailerDBLogBundle\Modal\EmailLog */
+    /** @var \Schobner\SwiftMailerDBLogBundle\Model\EmailLog */
     private $emailLog;
 
     /** @var string */
@@ -77,7 +77,7 @@ class SendEmailListener implements Swift_Events_SendListener, Swift_Events_Trans
 
         if (!in_array(EmailLogInterface::class, class_implements($this->emailLogEntity), true)) {
             throw new ClassNotImplementsEmailLogInterfaceException(
-                'Set a class in email_log_entity which extends \Schobner\SwiftMailerDBLogBundle\Modal\EmailLog.'
+                'Set a class in email_log_entity which extends \Schobner\SwiftMailerDBLogBundle\Model\EmailLog.'
             );
         }
 
