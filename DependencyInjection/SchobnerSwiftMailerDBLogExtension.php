@@ -31,6 +31,6 @@ class SchobnerSwiftMailerDBLogExtension extends Extension
 
     public function getAlias(): string
     {
-        return 'schobner_swift_mailer_db_Log';
+        return 'schobner_swift_mailer_db_log';
     }
 }
