@@ -3,9 +3,10 @@
 namespace Schobner\SwiftMailerDBLogBundle\EventListener;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Schobner\SwiftMailerDBLogBundle\Exception\ConfigParameterEmptyException;
 use Schobner\SwiftMailerDBLogBundle\Model\EmailLogInterface;
 use Schobner\SwiftMailerDBLogBundle\Exception\ClassNotExistsException;
-use Schobner\SwiftMailerDBLogBundle\Exception\ClassNotImplementsEmailLogInterfaceException;
+use Schobner\SwiftMailerDBLogBundle\Exception\ClassNotImplementsInterfaceException;
 use Swift_Events_SendEvent;
 use Swift_Events_SendListener;
 use Swift_Events_TransportExceptionEvent;
@@ -14,8 +15,6 @@ use Swift_Mime_SimpleMessage;
 
 class SendEmailListener implements Swift_Events_SendListener, Swift_Events_TransportExceptionListener
 {
-
-    // TODO:GN: Unittests erstellen.
 
     /** @var \Doctrine\ORM\EntityManagerInterface */
     private $em;
@@ -26,18 +25,39 @@ class SendEmailListener implements Swift_Events_SendListener, Swift_Events_Trans
     /** @var string */
     private $emailLogEntity;
 
+    /**
+     * @param \Doctrine\ORM\EntityManagerInterface $em
+     * @param string $email_log_entity
+     *
+     * @throws \Schobner\SwiftMailerDBLogBundle\Exception\ClassNotExistsException
+     * @throws \Schobner\SwiftMailerDBLogBundle\Exception\ClassNotImplementsInterfaceException
+     * @throws \Schobner\SwiftMailerDBLogBundle\Exception\ConfigParameterEmptyException
+     */
     public function __construct(EntityManagerInterface $em, string $email_log_entity)
     {
+        if (empty($email_log_entity)) {
+            throw new ConfigParameterEmptyException('Set email_log_entity in your config.yml.');
+        }
+
+        if (!class_exists($email_log_entity)) {
+            throw new ClassNotExistsException('Check email_log_entity in your config.yml.');
+        }
+
+        if (!in_array(EmailLogInterface::class, class_implements($email_log_entity), true)) {
+            throw new ClassNotImplementsInterfaceException(
+                'Set a class in email_log_entity which extends \Schobner\SwiftMailerDBLogBundle\Model\EmailLog.'
+            );
+        }
+
         $this->em = $em;
         $this->emailLogEntity = $email_log_entity;
     }
 
-    /**
-     * @param \Swift_Events_SendEvent $evt
-     *
-     * @throws \Schobner\SwiftMailerDBLogBundle\Exception\ClassNotExistsException
-     * @throws \Schobner\SwiftMailerDBLogBundle\Exception\ClassNotImplementsEmailLogInterfaceException
-     */
+    public function getEmailLog(): ?EmailLogInterface
+    {
+        return $this->emailLog;
+    }
+
     public function beforeSendPerformed(Swift_Events_SendEvent $evt): void
     {
         // If email log already created
@@ -58,29 +78,8 @@ class SendEmailListener implements Swift_Events_SendListener, Swift_Events_Trans
         $this->updateLog(Swift_Events_SendEvent::RESULT_FAILED, $evt->getException()->getMessage());
     }
 
-    /**
-     * @param \Swift_Mime_SimpleMessage $msg
-     * @param int $result_status
-     *
-     * @throws \Schobner\SwiftMailerDBLogBundle\Exception\ClassNotExistsException
-     * @throws \Schobner\SwiftMailerDBLogBundle\Exception\ClassNotImplementsEmailLogInterfaceException
-     */
     private function createLog(Swift_Mime_SimpleMessage $msg, int $result_status): void
     {
-        if (empty($this->emailLogEntity)) {
-            return;
-        }
-
-        if (!class_exists($this->emailLogEntity)) {
-            throw new ClassNotExistsException('Set email_log_entity in your config.yml.');
-        }
-
-        if (!in_array(EmailLogInterface::class, class_implements($this->emailLogEntity), true)) {
-            throw new ClassNotImplementsEmailLogInterfaceException(
-                'Set a class in email_log_entity which extends \Schobner\SwiftMailerDBLogBundle\Model\EmailLog.'
-            );
-        }
-
         $this->emailLog = (new $this->emailLogEntity());
         $this->emailLog
             ->setMessageId($msg->getId())

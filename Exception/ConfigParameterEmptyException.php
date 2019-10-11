@@ -4,7 +4,7 @@ namespace Schobner\SwiftMailerDBLogBundle\Exception;
 
 use Exception;
 
-class ClassNotImplementsEmailLogInterfaceException extends Exception
+class ConfigParameterEmptyException extends Exception
 {
 
 }
