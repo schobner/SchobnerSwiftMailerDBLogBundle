@@ -3,7 +3,6 @@
 namespace Schobner\SwiftMailerDBLogBundle\EventListener;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Schobner\SwiftMailerDBLogBundle\Exception\ClassNotExistsException;
 use Schobner\SwiftMailerDBLogBundle\Exception\ClassNotImplementsInterfaceException;
 use Schobner\SwiftMailerDBLogBundle\Model\EmailLogInterface;
 use Swift_Events_SendEvent;
@@ -60,6 +59,7 @@ class SendEmailListener implements Swift_Events_SendListener, Swift_Events_Trans
             return;
         }
 
+        $this->loadOrCreateEmailLog($evt->getMessage()->getId());
         $this->createLog($evt->getMessage(), $evt->getResult());
     }
 
@@ -69,7 +69,7 @@ class SendEmailListener implements Swift_Events_SendListener, Swift_Events_Trans
             return;
         }
 
-        $this->loadEmailLog($evt->getMessage(), $evt->getResult());
+        $this->loadOrCreateEmailLog($evt->getMessage()->getId());
         $this->updateLog($evt->getResult());
     }
 
@@ -79,17 +79,31 @@ class SendEmailListener implements Swift_Events_SendListener, Swift_Events_Trans
             return;
         }
 
-        $this->loadEmailLog($evt->getSource()->getMessage(), Swift_Events_SendEvent::RESULT_FAILED);
-        // FIXME: geht das überhaupt?!
-
+        $this->loadOrCreateEmailLog($evt->getSource()->getMessage()->getId()); // FIXME: geht das überhaupt?!
         $this->updateLog(Swift_Events_SendEvent::RESULT_FAILED, $evt->getException()->getMessage());
+    }
+
+    private function loadOrCreateEmailLog(string $msg_id): void
+    {
+        // Already loaded
+        if ($this->emailLog !== null && isInstanceOf($this->emailLogEntityClassName, $this->emailLog)) {
+            return;
+        }
+
+        // Get message form database
+        $emailLogRepo = $this->em->getRepository($this->emailLogEntityClassName);
+        $this->emailLog = $emailLogRepo->findOneBy(['message_id' => $msg_id]);
+
+        // Create new if not found
+        if ($this->emailLog === null) {
+            $this->emailLog = (new $this->emailLogEntityClassName());
+            $this->emailLog->setMessageId($msg_id);
+        }
     }
 
     private function createLog(Swift_Mime_SimpleMessage $msg, int $result_status): void
     {
-        $this->emailLog = (new $this->emailLogEntityClassName());
         $this->emailLog
-            ->setMessageId($msg->getId())
             ->setEmailFrom($msg->getFrom())
             ->setEmailTo($msg->getTo())
             ->setSubject($msg->getSubject())
@@ -98,24 +112,6 @@ class SendEmailListener implements Swift_Events_SendListener, Swift_Events_Trans
             ->setSwiftMessage($msg);
         $this->em->persist($this->emailLog);
         $this->em->flush();
-    }
-
-    private function loadEmailLog(Swift_Mime_SimpleMessage $msg, int $result_status): void
-    {
-        // Already loaded
-        if ($this->emailLog !== null && $this->emailLog->getMessageId() === $msg->getId()) {
-            return;
-        }
-
-        // Get message form database
-        $this->emailLog = $this->em->getRepository($this->emailLogEntityClassName)->findOneBy(
-            ['message_id' => $msg->getId()]
-        );
-
-        // Create new if not found
-        if ($this->emailLog === null) {
-            $this->createLog($msg, $result_status);
-        }
     }
 
     private function updateLog(int $result_status, string $send_exception_message = null): void

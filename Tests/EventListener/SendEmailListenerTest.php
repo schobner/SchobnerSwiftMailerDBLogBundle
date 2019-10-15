@@ -162,7 +162,8 @@ class SendEmailListenerTest extends KernelTestCase
     /*
     public function testExceptionThrown(): void
     {
-    }*/
+    }
+    */
 
     // TODO: Test exceptionThrown
 
