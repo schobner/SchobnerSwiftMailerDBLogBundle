@@ -7,12 +7,11 @@ use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Faker\Factory;
 use Schobner\SwiftMailerDBLogBundle\EventListener\SendEmailListener;
-use Schobner\SwiftMailerDBLogBundle\Exception\ClassNotExistsException;
 use Schobner\SwiftMailerDBLogBundle\Exception\ClassNotImplementsInterfaceException;
-use Schobner\SwiftMailerDBLogBundle\Exception\ConfigParameterEmptyException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Swift_Events_SendEvent;
 use Swift_Mime_SimpleMessage;
+use Swift_Events_TransportExceptionEvent;
 
 class SendEmailListenerTest extends KernelTestCase
 {
@@ -20,12 +19,21 @@ class SendEmailListenerTest extends KernelTestCase
     /** @var array */
     private $dummyEmailLog;
 
-    /** @var \Doctrine\ORM\EntityManagerInterface|\PHPUnit\Framework\MockObject\MockObject */
-    private $emMock;
+    /** @var \Schobner\SwiftMailerDBLogBundle\EventListener\SendEmailListener */
+    private $listener;
 
     /** @var \PHPUnit\Framework\MockObject\MockObject|\Swift_Events_SendEvent */
     private $sendEvent;
 
+    /**
+     * SendEmailListenerTest constructor.
+     *
+     * @param null $name
+     * @param array $data
+     * @param string $dataName
+     *
+     * @throws \Schobner\SwiftMailerDBLogBundle\Exception\ClassNotImplementsInterfaceException
+     */
     public function __construct($name = null, array $data = [], $dataName = '')
     {
         parent::__construct($name, $data, $dataName);
@@ -46,10 +54,10 @@ class SendEmailListenerTest extends KernelTestCase
         $or->method('findOneBy')->willReturn($this->dummyEmailLog);
 
         // Mock entity manager
-        $this->emMock = $this->createMock(EntityManagerInterface::class);
-        $this->emMock->method('getRepository')->willReturn($or);
-        $this->emMock->method('persist')->willReturn(null);
-        $this->emMock->method('flush')->willReturn(null);
+        $emMock = $this->createMock(EntityManagerInterface::class);
+        $emMock->method('getRepository')->willReturn($or);
+        $emMock->method('persist')->willReturn(null);
+        $emMock->method('flush')->willReturn(null);
 
         // Mock swift message
         $swiftMessageMock = $this->createMock(Swift_Mime_SimpleMessage::class);
@@ -62,6 +70,9 @@ class SendEmailListenerTest extends KernelTestCase
         // Mock swift send event
         $this->sendEvent = $this->createMock(Swift_Events_SendEvent::class);
         $this->sendEvent->method('getMessage')->willReturn($swiftMessageMock);
+
+        // The listener
+        $this->listener = new SendEmailListener($emMock, ExampleEmailLogEntity::class);
     }
 
     /**
@@ -70,45 +81,63 @@ class SendEmailListenerTest extends KernelTestCase
      * @param string $exception
      * @param string $class
      *
-     * @throws \Schobner\SwiftMailerDBLogBundle\Exception\ClassNotExistsException
      * @throws \Schobner\SwiftMailerDBLogBundle\Exception\ClassNotImplementsInterfaceException
-     * @throws \Schobner\SwiftMailerDBLogBundle\Exception\ConfigParameterEmptyException
      */
     public function testExceptions(string $exception, string $class): void
     {
         $this->expectException($exception);
 
-        $em = $this->createMock(EntityManagerInterface::class);
-
-        new SendEmailListener($em, $class);
+        $emMock = $this->createMock(EntityManagerInterface::class);
+        new SendEmailListener($emMock, $class);
     }
 
     public function exceptionProvider(): array
     {
         return [
-            'empty config parameter' => [ConfigParameterEmptyException::class, ''],
-            // TODO: allow empty config, but then, check at all executions!
-            'non existing class' => [ClassNotExistsException::class, 'WrongNamespace\EmailLog'],
             'class not implements interface' => [ClassNotImplementsInterfaceException::class, Exception::class],
         ];
     }
 
     /**
-     * @throws \Schobner\SwiftMailerDBLogBundle\Exception\ClassNotExistsException
+     * @dataProvider missingParameterProvider
+     *
+     * @param string $method
+     * @param string $parameter_class
+     *
      * @throws \Schobner\SwiftMailerDBLogBundle\Exception\ClassNotImplementsInterfaceException
-     * @throws \Schobner\SwiftMailerDBLogBundle\Exception\ConfigParameterEmptyException
      */
+    public function testMissingConfigParameter(string $method, string $parameter_class): void
+    {
+        // Simulate missing parameter
+        $emMock = $this->createMock(EntityManagerInterface::class);
+        $this->listener = new SendEmailListener($emMock, '');
+
+        // Test send email
+        $eventMock = $this->createMock($parameter_class);
+        $this->listener->$method($eventMock);
+
+        self::assertTrue(true); // In error case, this line will not be processed
+    }
+
+    public function missingParameterProvider(): array
+    {
+        return [
+            'beforeSendPerformed' => ['beforeSendPerformed', Swift_Events_SendEvent::class],
+            'sendPerformed' => ['sendPerformed', Swift_Events_SendEvent::class],
+            'exceptionThrown' => ['exceptionThrown', Swift_Events_TransportExceptionEvent::class],
+        ];
+    }
+
     public function testBeforeSendPerformed(): void
     {
         // Set email status
         $this->sendEvent->method('getResult')->willReturn(Swift_Events_SendEvent::RESULT_PENDING);
 
         // Simulate new email send
-        $listener = new SendEmailListener($this->emMock, ExampleEmailLogEntity::class);
-        $listener->beforeSendPerformed($this->sendEvent);
+        $this->listener->beforeSendPerformed($this->sendEvent);
 
         // Check if all data saved
-        $newEmailLog = $listener->getEmailLog();
+        $newEmailLog = $this->listener->getEmailLog();
         self::assertEquals($this->dummyEmailLog->getMessageId(), $newEmailLog->getMessageId());
         self::assertEquals($this->dummyEmailLog->getEmailFrom(), $newEmailLog->getEmailFrom());
         self::assertEquals($this->dummyEmailLog->getEmailTo(), $newEmailLog->getEmailTo());
@@ -117,28 +146,23 @@ class SendEmailListenerTest extends KernelTestCase
         self::assertEquals(Swift_Events_SendEvent::RESULT_PENDING, $newEmailLog->getResultStatus());
     }
 
-    /**
-     * @throws \Schobner\SwiftMailerDBLogBundle\Exception\ClassNotExistsException
-     * @throws \Schobner\SwiftMailerDBLogBundle\Exception\ClassNotImplementsInterfaceException
-     * @throws \Schobner\SwiftMailerDBLogBundle\Exception\ConfigParameterEmptyException
-     */
     public function testSendPerformed(): void
     {
         // Set email status
         $this->sendEvent->method('getResult')->willReturn(Swift_Events_SendEvent::RESULT_SUCCESS);
 
         // Simulate email update
-        $listener = new SendEmailListener($this->emMock, ExampleEmailLogEntity::class);
-        $listener->sendPerformed($this->sendEvent);
+        $this->listener->sendPerformed($this->sendEvent);
 
         // Check if data updated
-        $newEmailLog = $listener->getEmailLog();
+        $newEmailLog = $this->listener->getEmailLog();
         self::assertEquals(Swift_Events_SendEvent::RESULT_SUCCESS, $newEmailLog->getResultStatus());
     }
 
+    /*
     public function testExceptionThrown(): void
     {
-    }
+    }*/
 
     // TODO: Test exceptionThrown
 
