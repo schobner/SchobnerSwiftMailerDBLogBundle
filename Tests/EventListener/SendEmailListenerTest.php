@@ -2,6 +2,7 @@
 
 namespace Schobner\SwiftMailerDBLogBundle\Tests\EventListener;
 
+use Doctrine\Common\Persistence\ObjectRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Faker\Factory;
@@ -16,14 +17,51 @@ use Swift_Mime_SimpleMessage;
 class SendEmailListenerTest extends KernelTestCase
 {
 
-    /** @var \Faker\Generator */
-    private $faker;
+    /** @var array */
+    private $dummyEmailLog;
+
+    /** @var \Doctrine\ORM\EntityManagerInterface|\PHPUnit\Framework\MockObject\MockObject */
+    private $emMock;
+
+    /** @var \PHPUnit\Framework\MockObject\MockObject|\Swift_Events_SendEvent */
+    private $sendEvent;
 
     public function __construct($name = null, array $data = [], $dataName = '')
     {
         parent::__construct($name, $data, $dataName);
 
-        $this->faker = Factory::create();
+        // Dependency
+        $faker = Factory::create();
+
+        // Dummy email data
+        $this->dummyEmailLog = (new ExampleEmailLogEntity())
+            ->setMessageId($faker->regexify('[a-z0-9]{32}').'@swift.generated')
+            ->setEmailFrom([$faker->email => $faker->company])
+            ->setEmailTo([$faker->email => $faker->firstName.' '.$faker->lastName])
+            ->setSubject('Test subject text')
+            ->setEml('Binary email content');
+
+        // Mock email log repo
+        $or = $this->createMock(ObjectRepository::class);
+        $or->method('findOneBy')->willReturn($this->dummyEmailLog);
+
+        // Mock entity manager
+        $this->emMock = $this->createMock(EntityManagerInterface::class);
+        $this->emMock->method('getRepository')->willReturn($or);
+        $this->emMock->method('persist')->willReturn(null);
+        $this->emMock->method('flush')->willReturn(null);
+
+        // Mock swift message
+        $swiftMessageMock = $this->createMock(Swift_Mime_SimpleMessage::class);
+        $swiftMessageMock->method('getId')->willReturn($this->dummyEmailLog->getMessageId());
+        $swiftMessageMock->method('getFrom')->willReturn($this->dummyEmailLog->getEmailFrom());
+        $swiftMessageMock->method('getTo')->willReturn($this->dummyEmailLog->getEmailTo());
+        $swiftMessageMock->method('getSubject')->willReturn($this->dummyEmailLog->getSubject());
+        $swiftMessageMock->method('toString')->willReturn($this->dummyEmailLog->getEml());
+
+        // Mock swift send event
+        $this->sendEvent = $this->createMock(Swift_Events_SendEvent::class);
+        $this->sendEvent->method('getMessage')->willReturn($swiftMessageMock);
     }
 
     /**
@@ -40,7 +78,6 @@ class SendEmailListenerTest extends KernelTestCase
     {
         $this->expectException($exception);
 
-        // Mock entity manager
         $em = $this->createMock(EntityManagerInterface::class);
 
         new SendEmailListener($em, $class);
@@ -50,6 +87,7 @@ class SendEmailListenerTest extends KernelTestCase
     {
         return [
             'empty config parameter' => [ConfigParameterEmptyException::class, ''],
+            // TODO: allow empty config, but then, check at all executions!
             'non existing class' => [ClassNotExistsException::class, 'WrongNamespace\EmailLog'],
             'class not implements interface' => [ClassNotImplementsInterfaceException::class, Exception::class],
         ];
@@ -62,50 +100,48 @@ class SendEmailListenerTest extends KernelTestCase
      */
     public function testBeforeSendPerformed(): void
     {
-        // Example email content
-        $messageId = $this->faker->regexify('[a-z0-9]{32}').'@swift.generated';
-        $from = [$this->faker->email => $this->faker->company];
-        $to = [$this->faker->email => $this->faker->firstName.' '.$this->faker->lastName];
-        $subject = 'Test subject text';
-        $eml = 'Binary message content';
+        // Set email status
+        $this->sendEvent->method('getResult')->willReturn(Swift_Events_SendEvent::RESULT_PENDING);
 
-        // Mock entity manager
-        $em = $this->createMock(EntityManagerInterface::class);
-        $em->method('persist')->willReturn(null);
-        $em->method('flush')->willReturn(null);
+        // Simulate new email send
+        $listener = new SendEmailListener($this->emMock, ExampleEmailLogEntity::class);
+        $listener->beforeSendPerformed($this->sendEvent);
 
-        // Mock message
-        $message = $this->createMock(Swift_Mime_SimpleMessage::class);
-        $message->method('getId')->willReturn($messageId);
-        $message->method('getFrom')->willReturn($from);
-        $message->method('getTo')->willReturn($to);
-        $message->method('getSubject')->willReturn($subject);
-        $message->method('toString')->willReturn($eml);
-
-        // Mock send event
-        $sendEvent = $this->createMock(Swift_Events_SendEvent::class);
-        $sendEvent->method('getMessage')->willReturn($message);
-        $sendEvent->method('getResult')->willReturn(Swift_Events_SendEvent::RESULT_SUCCESS);
-
-        // Execute event listener
-        $listener = new SendEmailListener($em, ExampleEmailLogEntity::class);
-        $listener->beforeSendPerformed($sendEvent);
-
-        // Check if data saved
-        $emailLog = $listener->getEmailLog();
-        self::assertEquals($messageId, $emailLog->getMessageId());
-        self::assertEquals($from, $emailLog->getEmailFrom());
-        self::assertEquals($to, $emailLog->getEmailTo());
-        self::assertEquals($subject, $emailLog->getSubject());
-        self::assertEquals($eml, $emailLog->getEml());
-        self::assertEquals(Swift_Events_SendEvent::RESULT_SUCCESS, $emailLog->getResultStatus());
+        // Check if all data saved
+        $newEmailLog = $listener->getEmailLog();
+        self::assertEquals($this->dummyEmailLog->getMessageId(), $newEmailLog->getMessageId());
+        self::assertEquals($this->dummyEmailLog->getEmailFrom(), $newEmailLog->getEmailFrom());
+        self::assertEquals($this->dummyEmailLog->getEmailTo(), $newEmailLog->getEmailTo());
+        self::assertEquals($this->dummyEmailLog->getSubject(), $newEmailLog->getSubject());
+        self::assertEquals($this->dummyEmailLog->getEml(), $newEmailLog->getEml());
+        self::assertEquals(Swift_Events_SendEvent::RESULT_PENDING, $newEmailLog->getResultStatus());
     }
 
-    // Test if log created (all parameters?!)
+    /**
+     * @throws \Schobner\SwiftMailerDBLogBundle\Exception\ClassNotExistsException
+     * @throws \Schobner\SwiftMailerDBLogBundle\Exception\ClassNotImplementsInterfaceException
+     * @throws \Schobner\SwiftMailerDBLogBundle\Exception\ConfigParameterEmptyException
+     */
+    public function testSendPerformed(): void
+    {
+        // Set email status
+        $this->sendEvent->method('getResult')->willReturn(Swift_Events_SendEvent::RESULT_SUCCESS);
 
-    // Test already created
+        // Simulate email update
+        $listener = new SendEmailListener($this->emMock, ExampleEmailLogEntity::class);
+        $listener->sendPerformed($this->sendEvent);
 
-    // Test update (sendPerformed)
+        // Check if data updated
+        $newEmailLog = $listener->getEmailLog();
+        self::assertEquals(Swift_Events_SendEvent::RESULT_SUCCESS, $newEmailLog->getResultStatus());
+    }
 
-    // Test update (exceptionThrown)
+    public function testExceptionThrown(): void
+    {
+    }
+
+    // TODO: Test exceptionThrown
+
+    // TODO: Test twice aufrufe (gleiche message id's! > sollte dann von lokale variable geladen werden)
+    // TODO: Test twice emails (different message id's! > sollte dann von db geladen werden)
 }

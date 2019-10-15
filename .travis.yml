@@ -6,9 +6,11 @@ php:
   - 7.1
   - 7.2
   - 7.3
+  - nightly
 
 before_install:
   - phpenv config-rm xdebug.ini
+  - composer --version
   - composer --verbose self-update
   - composer --version
 
