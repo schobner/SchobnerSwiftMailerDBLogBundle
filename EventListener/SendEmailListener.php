@@ -91,7 +91,7 @@ class SendEmailListener implements Swift_Events_SendListener, Swift_Events_Trans
         }
 
         // Get message form database
-        $emailLogRepo = $this->em->getRepository($this->emailLogEntityClassName);
+        $emailLogRepo = $this->em->getRepository(EmailLogInterface::class);
         $this->emailLog = $emailLogRepo->findOneBy(['message_id' => $msg_id]);
 
         // Create new if not found
