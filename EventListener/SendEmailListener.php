@@ -34,7 +34,8 @@ class SendEmailListener implements Swift_Events_SendListener, Swift_Events_Trans
     {
         if (!empty($email_log_class_name) &&
             class_exists($email_log_class_name) &&
-            !in_array(EmailLogInterface::class, class_implements($email_log_class_name), true)) {
+            !in_array(EmailLogInterface::class, class_implements($email_log_class_name), true)
+        ) {
             throw new ClassNotImplementsInterfaceException(
                 'Set a class in email_log_class_name which extends \Schobner\SwiftMailerDBLogBundle\Model\EmailLog.'
             );

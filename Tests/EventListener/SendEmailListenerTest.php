@@ -10,8 +10,9 @@ use Schobner\SwiftMailerDBLogBundle\EventListener\SendEmailListener;
 use Schobner\SwiftMailerDBLogBundle\Exception\ClassNotImplementsInterfaceException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Swift_Events_SendEvent;
-use Swift_Mime_SimpleMessage;
 use Swift_Events_TransportExceptionEvent;
+use Swift_Mime_SimpleMessage;
+use Swift_TransportException;
 
 class SendEmailListenerTest extends KernelTestCase
 {
@@ -118,10 +119,8 @@ class SendEmailListenerTest extends KernelTestCase
 
     public function testBeforeSendPerformed(): void
     {
-        // Set email status
-        $this->sendEvent->method('getResult')->willReturn(Swift_Events_SendEvent::RESULT_PENDING);
-
         // Simulate new email send
+        $this->sendEvent->method('getResult')->willReturn(Swift_Events_SendEvent::RESULT_PENDING);
         $this->listener->beforeSendPerformed($this->sendEvent);
 
         // Check if all data saved
@@ -136,10 +135,8 @@ class SendEmailListenerTest extends KernelTestCase
 
     public function testSendPerformed(): void
     {
-        // Set email status
-        $this->sendEvent->method('getResult')->willReturn(Swift_Events_SendEvent::RESULT_SUCCESS);
-
         // Simulate email update
+        $this->sendEvent->method('getResult')->willReturn(Swift_Events_SendEvent::RESULT_SUCCESS);
         $this->listener->sendPerformed($this->sendEvent);
 
         // Check if data updated
@@ -147,12 +144,26 @@ class SendEmailListenerTest extends KernelTestCase
         self::assertEquals(Swift_Events_SendEvent::RESULT_SUCCESS, $newEmailLog->getResultStatus());
     }
 
+    /**
+     * @throws \Schobner\SwiftMailerDBLogBundle\Exception\NoEmailLogInCacheException
+     */
     public function testExceptionThrown(): void
     {
+        // Simulate new email send
+        $this->sendEvent->method('getResult')->willReturn(Swift_Events_SendEvent::RESULT_PENDING);
+        $this->listener->beforeSendPerformed($this->sendEvent);
+
+        // Mock email send exception
+        $exception_msg = 'Connection could not be established with host localhost [Connection refused #61]';
+        $exception = new Swift_TransportException($exception_msg);
+        $exceptionEvent = $this->createMock(Swift_Events_TransportExceptionEvent::class);
+        $exceptionEvent->method('getException')->willReturn($exception);
+
+        // Simulate email send error
+        $this->listener->exceptionThrown($exceptionEvent);
+
+        // Check if data updated
+        $newEmailLog = $this->listener->getEmailLog();
+        self::assertEquals($exception_msg, $newEmailLog->getSendExceptionMessage());
     }
-
-    // TODO: Test exceptionThrown
-
-    // TODO: Test twice aufrufe (gleiche message id's! > sollte dann von lokale variable geladen werden)
-    // TODO: Test twice emails (different message id's! > sollte dann von db geladen werden)
 }
