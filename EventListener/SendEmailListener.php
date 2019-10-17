@@ -4,6 +4,7 @@ namespace Schobner\SwiftMailerDBLogBundle\EventListener;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Schobner\SwiftMailerDBLogBundle\Exception\ClassNotImplementsInterfaceException;
+use Schobner\SwiftMailerDBLogBundle\Exception\NoEmailLogInCacheException;
 use Schobner\SwiftMailerDBLogBundle\Model\EmailLogInterface;
 use Swift_Events_SendEvent;
 use Swift_Events_SendListener;
@@ -73,22 +74,35 @@ class SendEmailListener implements Swift_Events_SendListener, Swift_Events_Trans
         $this->updateLog($evt->getResult());
     }
 
+    /**
+     * @param \Swift_Events_TransportExceptionEvent $evt
+     *
+     * @throws \Schobner\SwiftMailerDBLogBundle\Exception\NoEmailLogInCacheException
+     */
     public function exceptionThrown(Swift_Events_TransportExceptionEvent $evt): void
     {
         if (empty($this->emailLogEntityClassName) || !class_exists($this->emailLogEntityClassName)) {
             return;
         }
 
-        $this->loadOrCreateEmailLog($evt->getSource()->getMessage()->getId()); // FIXME: geht das überhaupt?!
+        if ($this->emailLog === null) {
+            throw new NoEmailLogInCacheException('Direct error\'s without cached email log should never occur.');
+        }
+
+        $this->loadOrCreateEmailLog($this->emailLog->getMessageId());
         $this->updateLog(Swift_Events_SendEvent::RESULT_FAILED, $evt->getException()->getMessage());
     }
 
     private function loadOrCreateEmailLog(string $msg_id): void
     {
+        // TODO: This instance of validation is not tested. add edge to edge test?!
+
         // Already loaded
         if ($this->emailLog instanceof $this->emailLogEntityClassName) {
             return;
         }
+
+        // TODO: This database request is not tested. Use edge to edge test?!
 
         // Get message form database
         $emailLogRepo = $this->em->getRepository($this->emailLogEntityClassName);
