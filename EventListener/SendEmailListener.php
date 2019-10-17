@@ -119,9 +119,12 @@ class SendEmailListener implements Swift_Events_SendListener, Swift_Events_Trans
     private function createLog(Swift_Mime_SimpleMessage $msg, int $result_status): void
     {
         $this->emailLog
-            ->setEmailFrom($msg->getFrom())
-            ->setEmailTo($msg->getTo())
             ->setSubject($msg->getSubject())
+            ->setEmailFrom($msg->getFrom())
+            ->setEmailReplyTo($msg->getReplyTo())
+            ->setEmailTo($msg->getTo())
+            ->setEmailCc($msg->getCc())
+            ->setEmailBcc($msg->getBcc())
             ->setEml($msg->toString())
             ->setResultStatus($result_status)
             ->setSwiftMessage($msg);

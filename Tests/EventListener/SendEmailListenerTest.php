@@ -46,7 +46,10 @@ class SendEmailListenerTest extends KernelTestCase
         $this->dummyEmailLog = (new ExampleEmailLogEntity())
             ->setMessageId($faker->regexify('[a-z0-9]{32}').'@swift.generated')
             ->setEmailFrom([$faker->email => $faker->company])
+            ->setEmailReplyTo($faker->email)
             ->setEmailTo([$faker->email => $faker->firstName.' '.$faker->lastName])
+            ->setEmailCc([$faker->email => $faker->firstName.' '.$faker->lastName])
+            ->setEmailBcc([$faker->email => $faker->firstName.' '.$faker->lastName])
             ->setSubject('Test subject text')
             ->setEml('Binary email content');
 
@@ -64,7 +67,10 @@ class SendEmailListenerTest extends KernelTestCase
         $swiftMessageMock = $this->createMock(Swift_Mime_SimpleMessage::class);
         $swiftMessageMock->method('getId')->willReturn($this->dummyEmailLog->getMessageId());
         $swiftMessageMock->method('getFrom')->willReturn($this->dummyEmailLog->getEmailFrom());
+        $swiftMessageMock->method('getReplyTo')->willReturn($this->dummyEmailLog->getEmailReplyTo());
         $swiftMessageMock->method('getTo')->willReturn($this->dummyEmailLog->getEmailTo());
+        $swiftMessageMock->method('getCc')->willReturn($this->dummyEmailLog->getEmailCc());
+        $swiftMessageMock->method('getBcc')->willReturn($this->dummyEmailLog->getEmailBcc());
         $swiftMessageMock->method('getSubject')->willReturn($this->dummyEmailLog->getSubject());
         $swiftMessageMock->method('toString')->willReturn($this->dummyEmailLog->getEml());
 
@@ -127,7 +133,10 @@ class SendEmailListenerTest extends KernelTestCase
         $newEmailLog = $this->listener->getEmailLog();
         self::assertEquals($this->dummyEmailLog->getMessageId(), $newEmailLog->getMessageId());
         self::assertEquals($this->dummyEmailLog->getEmailFrom(), $newEmailLog->getEmailFrom());
+        self::assertEquals($this->dummyEmailLog->getEmailReplyTo(), $newEmailLog->getEmailReplyTo());
         self::assertEquals($this->dummyEmailLog->getEmailTo(), $newEmailLog->getEmailTo());
+        self::assertEquals($this->dummyEmailLog->getEmailCc(), $newEmailLog->getEmailCc());
+        self::assertEquals($this->dummyEmailLog->getEmailBcc(), $newEmailLog->getEmailBcc());
         self::assertEquals($this->dummyEmailLog->getSubject(), $newEmailLog->getSubject());
         self::assertEquals($this->dummyEmailLog->getEml(), $newEmailLog->getEml());
         self::assertEquals(Swift_Events_SendEvent::RESULT_PENDING, $newEmailLog->getResultStatus());

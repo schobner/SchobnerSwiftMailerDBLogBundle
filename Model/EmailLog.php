@@ -54,6 +54,13 @@ abstract class EmailLog implements EmailLogInterface
     protected $emailFrom;
 
     /**
+     * @var string
+     *
+     * @ORM\Column(type="string")
+     */
+    protected $emailReplyTo;
+
+    /**
      * @var array
      *
      * @ORM\Column(type="array")
@@ -61,13 +68,25 @@ abstract class EmailLog implements EmailLogInterface
     protected $emailTo;
 
     /**
+     * @var array
+     *
+     * @ORM\Column(type="array")
+     */
+    protected $emailCc;
+
+    /**
+     * @var array
+     *
+     * @ORM\Column(type="array")
+     */
+    protected $emailBcc;
+
+    /**
      * @var string
      *
      * @ORM\Column(type="string")
      */
     protected $subject;
-
-    // TODO: Add fields that all will be saved. E.g. replayTo, ...
 
     /**
      * The complete email as eml
@@ -166,6 +185,18 @@ abstract class EmailLog implements EmailLogInterface
         return $this;
     }
 
+    public function getEmailReplyTo(): string
+    {
+        return $this->emailReplyTo;
+    }
+
+    public function setEmailReplyTo(?string $emailReplyTo): EmailLogInterface
+    {
+        $this->emailReplyTo = $emailReplyTo;
+
+        return $this;
+    }
+
     public function getEmailTo(): array
     {
         return $this->emailTo;
@@ -174,6 +205,30 @@ abstract class EmailLog implements EmailLogInterface
     public function setEmailTo(array $emailTo): EmailLogInterface
     {
         $this->emailTo = $emailTo;
+
+        return $this;
+    }
+
+    public function getEmailCc(): array
+    {
+        return $this->emailCc;
+    }
+
+    public function setEmailCc(?array $emailCc): EmailLogInterface
+    {
+        $this->emailCc = $emailCc;
+
+        return $this;
+    }
+
+    public function getEmailBcc(): array
+    {
+        return $this->emailBcc;
+    }
+
+    public function setEmailBcc(?array $emailBcc): EmailLogInterface
+    {
+        $this->emailBcc = $emailBcc;
 
         return $this;
     }
