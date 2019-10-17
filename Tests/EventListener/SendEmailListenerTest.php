@@ -76,26 +76,14 @@ class SendEmailListenerTest extends KernelTestCase
     }
 
     /**
-     * @dataProvider exceptionProvider
-     *
-     * @param string $exception
-     * @param string $class
-     *
      * @throws \Schobner\SwiftMailerDBLogBundle\Exception\ClassNotImplementsInterfaceException
      */
-    public function testExceptions(string $exception, string $class): void
+    public function testException(): void
     {
-        $this->expectException($exception);
+        $this->expectException(ClassNotImplementsInterfaceException::class);
 
         $emMock = $this->createMock(EntityManagerInterface::class);
-        new SendEmailListener($emMock, $class);
-    }
-
-    public function exceptionProvider(): array
-    {
-        return [
-            'class not implements interface' => [ClassNotImplementsInterfaceException::class, Exception::class],
-        ];
+        new SendEmailListener($emMock, Exception::class);
     }
 
     /**
@@ -159,11 +147,10 @@ class SendEmailListenerTest extends KernelTestCase
         self::assertEquals(Swift_Events_SendEvent::RESULT_SUCCESS, $newEmailLog->getResultStatus());
     }
 
-    /*
     public function testExceptionThrown(): void
     {
+
     }
-    */
 
     // TODO: Test exceptionThrown
 

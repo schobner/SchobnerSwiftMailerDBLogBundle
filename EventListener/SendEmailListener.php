@@ -86,13 +86,13 @@ class SendEmailListener implements Swift_Events_SendListener, Swift_Events_Trans
     private function loadOrCreateEmailLog(string $msg_id): void
     {
         // Already loaded
-        if ($this->emailLog !== null && isInstanceOf($this->emailLogEntityClassName, $this->emailLog)) {
+        if ($this->emailLog instanceof $this->emailLogEntityClassName) {
             return;
         }
 
         // Get message form database
-        $emailLogRepo = $this->em->getRepository(EmailLogInterface::class);
-        $this->emailLog = $emailLogRepo->findOneBy(['message_id' => $msg_id]);
+        $emailLogRepo = $this->em->getRepository($this->emailLogEntityClassName);
+        $this->emailLog = $emailLogRepo->findOneBy(['messageId' => $msg_id]);
 
         // Create new if not found
         if ($this->emailLog === null) {

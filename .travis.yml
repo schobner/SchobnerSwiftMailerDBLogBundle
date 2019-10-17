@@ -21,7 +21,9 @@ install:
 script:
   - ./vendor/bin/phpunit --configuration ./phpunit.xml.dist
 
-# TODO: Test with different symfony versions?!
+# TODO: Test multiple Symfony & Doctrine & SwiftMailer versions?!
+
+# TODO: Add notifications:
 
 #notifications:
 #  email: false
