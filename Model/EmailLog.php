@@ -15,6 +15,7 @@ use Swift_Mime_SimpleMessage;
  */
 abstract class EmailLog implements EmailLogInterface
 {
+    // TODO: Minimum and maximum data saving test. Currently no test cover this.
 
     /**
      * @var integer

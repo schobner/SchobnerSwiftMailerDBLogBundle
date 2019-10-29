@@ -36,7 +36,7 @@ use Schobner\SwiftMailerDBLogBundle\Model\EmailLog as BaseEmailLog;
 
 /**
  * @ORM\Entity()
- * @ORM\Table(name="bu_email_log")
+ * @ORM\Table(name="swift_mailer_log")
  */
 class EmailLog extends BaseEmailLog
 {

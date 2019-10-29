@@ -98,8 +98,11 @@ class SendEmailListener implements Swift_Events_SendListener, Swift_Events_Trans
     {
         // TODO: This instance of validation is not tested. add edge to edge test?!
 
-        // Already loaded
-        if ($this->emailLog instanceof $this->emailLogEntityClassName) {
+        // If already loaded and same message
+        // TODO:GN: Add test: testen ob zwei mail hintereinander laogs erzeugen. hatte nicht funktioniert.
+        if ($this->emailLog instanceof $this->emailLogEntityClassName &&
+            $msg_id === $this->emailLog->getMessageId()
+        ) {
             return;
         }
 
