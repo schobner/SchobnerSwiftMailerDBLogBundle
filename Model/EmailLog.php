@@ -284,12 +284,12 @@ abstract class EmailLog implements EmailLogInterface
 
     public function getSwiftMessage(): Swift_Mime_SimpleMessage
     {
-        return unserialize($this->swiftMessage, [Swift_Mime_SimpleMessage::class]);
+        return unserialize(base64_decode($this->swiftMessage), [Swift_Mime_SimpleMessage::class]);
     }
 
     public function setSwiftMessage(Swift_Mime_SimpleMessage $swiftMessage): EmailLogInterface
     {
-        $this->swiftMessage = serialize($swiftMessage);
+        $this->swiftMessage = base64_encode(serialize($swiftMessage));
 
         return $this;
     }
